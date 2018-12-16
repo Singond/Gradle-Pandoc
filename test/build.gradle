@@ -1,0 +1,14 @@
+import com.github.singond.gradle.pandoc.PandocTask
+
+buildscript {
+	repositories {
+		flatDir {
+			dirs("../build/libs")
+		}
+	}
+	dependencies {
+		classpath name: 'Gradle-Pandoc'
+	}
+}
+
+task runTask(type: PandocTask)
