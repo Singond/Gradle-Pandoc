@@ -11,6 +11,8 @@ buildscript {
 	}
 }
 
+apply plugin: 'com.github.singond.pandoc'
+
 task runTask(type: PandocTask) {
 	sources files("docs") {
 		exclude "test.md"
