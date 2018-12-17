@@ -8,11 +8,15 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PandocTask extends DefaultTask {
 
 	private FileCollection sources;
 	private File outputDir;
+
+	private static final Logger logger = LoggerFactory.getLogger("Pandoc");
 
 	@InputFiles
 	@SkipWhenEmpty
@@ -52,7 +56,7 @@ public class PandocTask extends DefaultTask {
 	@TaskAction
 	public void executeTask() {
 		for (File s : sources.getAsFileTree()) {
-			System.out.println("Processing: " + s);
+			logger.info("Processing: " + s);
 		}
 	}
 }
