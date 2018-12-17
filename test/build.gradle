@@ -11,4 +11,7 @@ buildscript {
 	}
 }
 
-task runTask(type: PandocTask)
+task runTask(type: PandocTask) {
+	sources files("docs")
+	outputDir file("$buildDir/docs")
+}
