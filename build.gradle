@@ -1,4 +1,10 @@
 apply plugin: 'java'
+apply plugin: 'eclipse'
+
+eclipse {
+	project.name = 'Gradle-Pandoc'
+	classpath.downloadJavadoc = true
+}
 
 dependencies {
 	implementation gradleApi()
