@@ -7,7 +7,7 @@ buildscript {
 		}
 	}
 	dependencies {
-		classpath name: 'Gradle-Pandoc'
+		classpath name: 'gradle-pandoc', version: '0.+'
 	}
 }
 
