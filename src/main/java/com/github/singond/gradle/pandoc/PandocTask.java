@@ -7,17 +7,17 @@ import java.util.Set;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.process.ExecSpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PandocTask extends DefaultTask {
 
-	private static final Logger logger = LoggerFactory.getLogger("Pandoc");
+	private static final Logger logger = Logging.getLogger("Pandoc");
 
 	private FileCollection sources;
 	private File outputDir;
@@ -106,15 +106,15 @@ public class PandocTask extends DefaultTask {
 	private void fileTraversalDemo() {
 		System.out.println("Sources: " + sources);
 		for (File s : sources) {
-			System.out.println("Contains: " + s);
+			logger.quiet("Contains: " + s);
 		}
 		System.out.println("Sources as files: " + sources.getFiles());
 		for (File s : sources.getFiles()) {
-			System.out.println("Contains: " + s);
+			logger.quiet("Contains: " + s);
 		}
 		System.out.println("Sources as tree: " + sources.getAsFileTree());
 		for (File s : sources.getAsFileTree()) {
-			System.out.println("Contains: " + s);
+			logger.quiet("Contains: " + s);
 		}
 	}
 
@@ -123,7 +123,7 @@ public class PandocTask extends DefaultTask {
 	 */
 	@SuppressWarnings("unused")
 	private void systemCallDemo() {
-		logger.info("Creating newfile.txt");
+		logger.quiet("Creating newfile.txt");
 		getProject().exec(new Action<ExecSpec>() {
 			@Override
 			public void execute(ExecSpec e) {
@@ -139,9 +139,9 @@ public class PandocTask extends DefaultTask {
 			logger.error("No format specified for task '{}'", getName());
 		}
 		for (File s : sources.getAsFileTree()) {
-			logger.info("Processing: " + s);
+			logger.quiet("Processing: " + s);
 			for (Format f : formats) {
-				logger.info("Will create {}.{}", s.getName(), f.extension);
+				logger.quiet("Will create {}.{}", s.getName(), f.extension);
 			}
 		}
 	}
