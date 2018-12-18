@@ -102,8 +102,8 @@ public class PandocTask extends DefaultTask {
 		formats.add(new Format(format, format));
 	}
 
-	// Testing only
-	public void printContents() {
+	@SuppressWarnings("unused")
+	private void fileTraversalDemo() {
 		System.out.println("Sources: " + sources);
 		for (File s : sources) {
 			System.out.println("Contains: " + s);
@@ -118,6 +118,21 @@ public class PandocTask extends DefaultTask {
 		}
 	}
 
+	/**
+	 * Example of a system call.
+	 */
+	@SuppressWarnings("unused")
+	private void systemCallDemo() {
+		logger.info("Creating newfile.txt");
+		getProject().exec(new Action<ExecSpec>() {
+			@Override
+			public void execute(ExecSpec e) {
+				e.executable("touch");
+				e.args("newfile.txt");
+			}
+		});
+	}
+
 	@TaskAction
 	public void executeTask() {
 		if (formats.isEmpty()) {
@@ -129,16 +144,6 @@ public class PandocTask extends DefaultTask {
 				logger.info("Will create {}.{}", s.getName(), f.extension);
 			}
 		}
-
-		// Example of a system call:
-		logger.info("Creating newfile.txt");
-		getProject().exec(new Action<ExecSpec>() {
-			@Override
-			public void execute(ExecSpec e) {
-				e.executable("touch");
-				e.args("newfile.txt");
-			}
-		});
 	}
 
 	/**
