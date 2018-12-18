@@ -18,6 +18,7 @@ task runTask(type: PandocTask) {
 	outputs.upToDateWhen{false}         // Run this every time
 	doFirst {
 		fileTraversalDemo()
+		logger.quiet("")
 	}
 }
 

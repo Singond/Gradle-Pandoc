@@ -103,17 +103,24 @@ public class PandocTask extends DefaultTask {
 	}
 
 	public void fileTraversalDemo() {
-		logger.quiet("Sources: " + sources);
+		logger.quiet("Sources");
 		for (File s : sources) {
-			logger.quiet("Contains: " + s);
+			logger.quiet("- Contains: " + s);
 		}
-		logger.quiet("Sources as files: " + sources.getFiles());
+		logger.quiet("Sources as files");
 		for (File s : sources.getFiles()) {
-			logger.quiet("Contains: " + s);
+			logger.quiet("- Contains: " + s);
 		}
-		logger.quiet("Sources as tree: " + sources.getAsFileTree());
+		logger.quiet("Sources as tree");
 		for (File s : sources.getAsFileTree()) {
-			logger.quiet("Contains: " + s);
+			logger.quiet("- Contains: " + s);
+		}
+		logger.quiet("Individual sources as trees");
+		for (File s : sources) {
+			logger.quiet("- Source: " + s);
+			for (File f : getProject().fileTree(s)) {
+				logger.quiet("  - Contains: " + f);
+			}
 		}
 	}
 
