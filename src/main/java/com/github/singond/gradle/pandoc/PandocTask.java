@@ -2,12 +2,14 @@ package com.github.singond.gradle.pandoc;
 
 import java.io.File;
 
+import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.process.ExecSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,5 +60,13 @@ public class PandocTask extends DefaultTask {
 		for (File s : sources.getAsFileTree()) {
 			logger.info("Processing: " + s);
 		}
+		logger.info("Creating newfile.txt");
+		getProject().exec(new Action<ExecSpec>() {
+			@Override
+			public void execute(ExecSpec e) {
+				e.executable("touch");
+				e.args("newfile.txt");
+			}
+		});
 	}
 }
