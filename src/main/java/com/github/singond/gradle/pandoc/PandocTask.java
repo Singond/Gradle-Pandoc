@@ -102,8 +102,7 @@ public class PandocTask extends DefaultTask {
 		formats.add(new Format(format, format));
 	}
 
-	@SuppressWarnings("unused")
-	private void fileTraversalDemo() {
+	public void fileTraversalDemo() {
 		System.out.println("Sources: " + sources);
 		for (File s : sources) {
 			logger.quiet("Contains: " + s);
@@ -121,8 +120,7 @@ public class PandocTask extends DefaultTask {
 	/**
 	 * Example of a system call.
 	 */
-	@SuppressWarnings("unused")
-	private void systemCallDemo() {
+	public void systemCallDemo() {
 		logger.quiet("Creating newfile.txt");
 		getProject().exec(new Action<ExecSpec>() {
 			@Override
