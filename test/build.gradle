@@ -12,10 +12,13 @@ buildscript {
 }
 
 task runTask(type: PandocTask) {
-	sources files("docs")
+	sources files("docs", "docs2")
 	outputDir file("$buildDir/docs")
 	format "html", "html"
 	outputs.upToDateWhen{false}         // Run this every time
+	doFirst {
+		fileTraversalDemo()
+	}
 }
 
 /*
