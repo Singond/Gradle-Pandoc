@@ -38,8 +38,8 @@ public class PandocTask extends DefaultTask {
 	 *
 	 * @param sources the files to be processed
 	 */
-	public void sources(FileCollection sources) {
-		this.sources = sources;
+	public void sources(Object... sources) {
+		this.sources = getProject().files(sources);
 	}
 
 	@OutputDirectory
@@ -50,10 +50,10 @@ public class PandocTask extends DefaultTask {
 	/**
 	 * Sets the directory for output files.
 	 *
-	 * @param ouputDir the output directory
+	 * @param outputDir the output directory
 	 */
-	public void outputDir(File ouputDir) {
-		this.outputDir = ouputDir;
+	public void outputDir(Object outputDir) {
+		this.outputDir = getProject().file(outputDir);
 	}
 
 	/**

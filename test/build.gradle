@@ -12,8 +12,8 @@ buildscript {
 }
 
 task runTask(type: PandocTask) {
-	sources files("docs", "docs2")
-	outputDir file("$buildDir/docs")
+	sources "docs", "docs2"
+	outputDir "$buildDir/docs"
 	format "html", "html"
 	outputs.upToDateWhen{false}         // Run this every time
 	doFirst {
