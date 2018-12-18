@@ -17,3 +17,16 @@ task runTask(type: PandocTask) {
 	format "html", "html"
 	outputs.upToDateWhen{false}         // Run this every time
 }
+
+/*
+ * Used to examine the conventions for determining a base directory
+ * for a file in a file collection.
+ */
+task examineCopy(type: Copy) {
+	from "docs/nested1", "docs2"
+	into "$buildDir/copied"
+}
+
+task clean(type: Delete) {
+	delete "$buildDir"
+}
