@@ -15,6 +15,7 @@ task runTask(type: PandocTask) {
 	sources "docs", "docs2"
 	outputDir "$buildDir/docs"
 	format "html", "html"
+	format "latex", "pdf"
 	outputs.upToDateWhen{false}         // Run this every time
 	doFirst {
 		fileTraversalDemo()

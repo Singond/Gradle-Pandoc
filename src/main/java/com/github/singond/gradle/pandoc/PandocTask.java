@@ -1,6 +1,7 @@
 package com.github.singond.gradle.pandoc;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -143,16 +144,23 @@ public class PandocTask extends DefaultTask {
 		if (formats.isEmpty()) {
 			logger.error("No format specified for task '{}'", getName());
 		}
-		for (File s : sources.getAsFileTree()) {
-			logger.quiet("Processing: " + s);
-			for (Format f : formats) {
-				logger.quiet("Will create {}.{}", s.getName(), f.extension);
+		for (File s : sources) {
+			Path baseDir = s.toPath();
+			logger.quiet("Base directory: " + baseDir);
+			Path src, tgt;
+			for (File f : getProject().fileTree(baseDir)) {
+				src = baseDir.relativize(f.toPath());
+				for (Format fmt : formats) {
+					tgt = src.resolveSibling(PathUtil.changeExtension(
+							src.getFileName(), fmt.extension));
+					logger.quiet("Will create {}", tgt);
+				}
 			}
 		}
 	}
 
 	/**
-	 * An format of an output file, along with filename extension.
+	 * A format of an output file, along with filename extension.
 	 */
 	private static class Format {
 		final String format;

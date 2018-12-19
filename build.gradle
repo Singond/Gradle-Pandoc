@@ -6,6 +6,12 @@ eclipse {
 	classpath.downloadJavadoc = true
 }
 
+repositories {
+	jcenter()
+}
+
 dependencies {
 	implementation gradleApi()
+
+	testCompile 'junit:junit:4.12'
 }
