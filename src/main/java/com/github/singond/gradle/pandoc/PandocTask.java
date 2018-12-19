@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import org.gradle.api.Action;
@@ -175,7 +176,12 @@ public class PandocTask extends DefaultTask {
 				for (Format fmt : formats) {
 					Path tgt;
 					if (separate) {
-						tgt = tgtBase.resolve(fmt.format).resolve(src);
+						String dirName;
+						if (Objects.equals(fmt.format, fmt.extension))
+							dirName = fmt.format;
+						else
+							dirName = fmt.format + "-" + fmt.extension;
+						tgt = tgtBase.resolve(dirName).resolve(src);
 					} else {
 						tgt = tgtBase.resolve(src);
 					}
