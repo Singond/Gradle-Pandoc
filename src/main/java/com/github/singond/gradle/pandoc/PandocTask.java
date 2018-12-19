@@ -1,6 +1,8 @@
 package com.github.singond.gradle.pandoc;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -140,20 +142,41 @@ public class PandocTask extends DefaultTask {
 	}
 
 	@TaskAction
-	public void executeTask() {
+	public void run() {
 		if (formats.isEmpty()) {
 			logger.error("No format specified for task '{}'", getName());
 		}
+		try {
+			convert(sources, outputDir, formats);
+		} catch (IOException e) {
+			logger.error("Input/output error", e);
+		}
+	}
+
+	private void convert
+			(FileCollection sources, File outputDir, Set<Format> formats)
+			throws IOException {
+		PandocExec pandoc = new PandocExec();
+		Path tgtBase = outputDir.toPath();
+		// Consider each source element separately
 		for (File s : sources) {
-			Path baseDir = s.toPath();
-			logger.quiet("Base directory: " + baseDir);
-			Path src, tgt;
-			for (File f : getProject().fileTree(baseDir)) {
-				src = baseDir.relativize(f.toPath());
+			// The source element is considered the base directory
+			Path srcBase = s.toPath();
+			logger.quiet("Base directory: " + srcBase);
+			for (File f : getProject().fileTree(srcBase)) {
+				Path src = f.toPath();
+				pandoc.setSource(src);
+				src = srcBase.relativize(src);
 				for (Format fmt : formats) {
-					tgt = src.resolveSibling(PathUtil.changeExtension(
-							src.getFileName(), fmt.extension));
-					logger.quiet("Will create {}", tgt);
+					Path tgt = tgtBase.resolve(src);
+					if (Files.notExists(tgt.getParent())) {
+						Files.createDirectory(tgt.getParent());
+					}
+					tgt = PathUtil.changeExtension(tgt, fmt.extension);
+					pandoc.setTarget(tgt);
+					pandoc.setFormat(fmt);
+					logger.quiet("Creating {}", tgt);
+					getProject().exec(pandoc);
 				}
 			}
 		}
@@ -196,6 +219,35 @@ public class PandocTask extends DefaultTask {
 			} else if (!format.equals(other.format)) return false;
 			return true;
 		}
+	}
 
+	private static class PandocExec implements Action<ExecSpec> {
+		/** Absolute path to the source file */
+		private Path source;
+		/** Absolute path to the target file */
+		private Path target;
+		/** The format to be used */
+		private Format format;
+
+		public void setSource(Path source) {
+			this.source = source;
+		}
+
+		public void setTarget(Path target) {
+			this.target = target;
+		}
+
+		public void setFormat(Format format) {
+			this.format = format;
+		}
+
+		@Override
+		public void execute(ExecSpec e) {
+			e.executable("pandoc");
+			e.args("--standalone");
+			e.args(source.toString());
+			e.args("--to=" + format.format);
+			e.args("--output=" + target.toString());
+		}
 	}
 }
