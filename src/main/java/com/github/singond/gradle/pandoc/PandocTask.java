@@ -25,6 +25,7 @@ public class PandocTask extends DefaultTask {
 	private FileCollection sources;
 	private File outputDir;
 	private final Set<Format> formats;
+	private boolean separateDirs = true;
 
 	public PandocTask() {
 		formats = new LinkedHashSet<Format>();
@@ -105,6 +106,10 @@ public class PandocTask extends DefaultTask {
 		formats.add(new Format(format, format));
 	}
 
+	public void separateOutput(boolean separate) {
+		separateDirs = separate;
+	}
+
 	public void fileTraversalDemo() {
 		logger.quiet("Sources");
 		for (File s : sources) {
@@ -147,14 +152,14 @@ public class PandocTask extends DefaultTask {
 			logger.error("No format specified for task '{}'", getName());
 		}
 		try {
-			convert(sources, outputDir, formats);
+			convert(sources, outputDir, formats, separateDirs);
 		} catch (IOException e) {
 			logger.error("Input/output error", e);
 		}
 	}
 
-	private void convert
-			(FileCollection sources, File outputDir, Set<Format> formats)
+	private void convert (FileCollection sources, File outputDir,
+			Set<Format> formats, boolean separate)
 			throws IOException {
 		PandocExec pandoc = new PandocExec();
 		Path tgtBase = outputDir.toPath();
@@ -168,9 +173,16 @@ public class PandocTask extends DefaultTask {
 				pandoc.setSource(src);
 				src = srcBase.relativize(src);
 				for (Format fmt : formats) {
-					Path tgt = tgtBase.resolve(src);
-					if (Files.notExists(tgt.getParent())) {
-						Files.createDirectory(tgt.getParent());
+					Path tgt;
+					if (separate) {
+						tgt = tgtBase.resolve(fmt.format).resolve(src);
+					} else {
+						tgt = tgtBase.resolve(src);
+					}
+					Path parent = tgt.getParent();
+					if (Files.notExists(parent)) {
+						logger.debug("Creating directory {}", parent);
+						Files.createDirectory(parent);
 					}
 					tgt = PathUtil.changeExtension(tgt, fmt.extension);
 					pandoc.setTarget(tgt);

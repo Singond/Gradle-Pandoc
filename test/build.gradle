@@ -14,6 +14,7 @@ buildscript {
 task runTask(type: PandocTask) {
 	sources "docs", "docs2"
 	outputDir "$buildDir/docs"
+//	separateOutput false
 	format "html", "html"
 	format "latex", "pdf"
 	outputs.upToDateWhen{false}         // Run this every time
