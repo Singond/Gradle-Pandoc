@@ -17,6 +17,7 @@ task runTask(type: PandocTask) {
 //	separateOutput false
 	format "html", "html"
 	format "latex", "pdf"
+//	pandocPath "/usr/bin/pandoc"
 	outputs.upToDateWhen{false}         // Run this every time
 	doFirst {
 		fileTraversalDemo()

@@ -27,6 +27,7 @@ public class PandocTask extends DefaultTask {
 	private File outputDir;
 	private final Set<Format> formats;
 	private boolean separateDirs = true;
+	private String pandocPath = null;
 
 	public PandocTask() {
 		formats = new LinkedHashSet<Format>();
@@ -111,6 +112,10 @@ public class PandocTask extends DefaultTask {
 		separateDirs = separate;
 	}
 
+	public void pandocPath(String path) {
+		pandocPath = path;
+	}
+
 	public void fileTraversalDemo() {
 		logger.quiet("Sources");
 		for (File s : sources) {
@@ -162,7 +167,7 @@ public class PandocTask extends DefaultTask {
 	private void convert (FileCollection sources, File outputDir,
 			Set<Format> formats, boolean separate)
 			throws IOException {
-		PandocExec pandoc = new PandocExec();
+		PandocExec pandoc = new PandocExec(pandocPath);
 		Path tgtBase = outputDir.toPath();
 		// Consider each source element separately
 		for (File s : sources) {
@@ -240,12 +245,21 @@ public class PandocTask extends DefaultTask {
 	}
 
 	private static class PandocExec implements Action<ExecSpec> {
+
+		/** Path to pandoc. If null, it is expected to be on PATH. */
+		private final String path;
 		/** Absolute path to the source file */
 		private Path source;
 		/** Absolute path to the target file */
 		private Path target;
 		/** The format to be used */
 		private Format format;
+
+		public PandocExec(String path) {
+			// If the path to Pandoc is not given, we must assume it is on PATH
+			this.path = path != null ? path : "pandoc";
+			logger.debug("The path to Pandoc is {}", this.path);
+		}
 
 		public void setSource(Path source) {
 			this.source = source;
@@ -261,7 +275,7 @@ public class PandocTask extends DefaultTask {
 
 		@Override
 		public void execute(ExecSpec e) {
-			e.executable("pandoc");
+			e.executable(path);
 			e.args("--standalone");
 			e.args(source.toString());
 			e.args("--to=" + format.format);
