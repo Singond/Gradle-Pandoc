@@ -3,6 +3,7 @@ package com.github.singond.gradle.pandoc;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -24,6 +25,8 @@ import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.incremental.IncrementalTaskInputs;
+import org.gradle.api.tasks.incremental.InputFileDetails;
 import org.gradle.api.tasks.util.PatternFilterable;
 import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.process.ExecSpec;
@@ -258,54 +261,132 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 	}
 
 	@TaskAction
-	public void run() throws IOException {
+	public void run(IncrementalTaskInputs inputs) {
 		if (formats.isEmpty()) {
-			logger.error(
-					"No format specified for task '{}', no output produced",
-					getName());
+			logger.error("No format specified for task '{}', "
+			             + "no output produced", getName());
+			return;
+		} else if (!inputs.isIncremental()) {
+			logger.info("Converting all documents with Pandoc...");
+			try {
+				convert(getSources());
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
 			return;
 		}
-		logger.info("Converting documents with Pandoc...");
+		// Action to take for new or out-of-date source files
+		inputs.outOfDate(new Action<InputFileDetails>() {
+			@Override
+			public void execute(InputFileDetails input) {
+				logger.info(
+						"Converting new or out-of-date files with Pandoc...");
+				FileCollection file = getProject().files(input.getFile());
+				logger.debug("Changed file: {}", file.getSingleFile());
+				try {
+					// NOTE: We assume the file is not filtered out
+					Pandoc.this.convert(file);
+				} catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
+			}
+		});
+		// Action to take for removed source files
+		inputs.removed(new Action<InputFileDetails>() {
+			@Override
+			public void execute(InputFileDetails input) {
+				logger.info("Removing targets of removed sources...");
+				Path src = input.getFile().toPath();
+				Path tgtBase = outputDir.toPath();
+				for (Format f : formats) {
+					Path target = resolveTargetForAbs
+							(src, tgtBase, f, separateDirs);
+					logger.debug("Deleting {}", target);
+					getProject().delete(target);
+				}
+			}
+		});
+	}
+
+	private Path relativeToBase(Path srcFile) {
+		Path base = null;
+		for (File f : sources) {
+			Path p = f.toPath();
+			if (srcFile.startsWith(p)) {
+				base = p;
+			}
+		}
+		if (base == null) {
+			// The file does not appear in the sources, what to do?
+			// Will not happen, hopefully
+			base = srcFile.getParent();
+		}
+		return base.relativize(srcFile);
+	}
+
+	/**
+	 * Resolves the target path for a source file given by a relative path.
+	 *
+	 * @param srcRel relative path to source file
+	 * @param tgtBase target directory
+	 * @param fmt conversion format
+	 * @param separate {@code true} if output should be separated per format
+	 * @return target name for {@code srcRel}
+	 */
+	private Path resolveTarget(Path srcRel, Path tgtBase, Format fmt,
+			boolean separate) {
+		Path target;
+		if (separate) {
+			String dirName;
+			if (Objects.equals(fmt.format, fmt.extension))
+				dirName = fmt.format;
+			else
+				dirName = fmt.format + "-" + fmt.extension;
+			target = tgtBase.resolve(dirName).resolve(srcRel);
+		} else {
+			target = tgtBase.resolve(srcRel);
+		}
+		target = PathUtil.changeExtension(target, fmt.extension);
+		return target;
+	}
+
+	/**
+	 * Resolves the target path for a source file given by an absolute path.
+	 *
+	 * @param srcAbs absolute path to source file
+	 * @param tgtBase target directory
+	 * @param fmt conversion format
+	 * @param separate {@code true} if output should be separated per format
+	 * @return target name for {@code srcAbs}
+	 */
+	private Path resolveTargetForAbs(Path srcAbs, Path tgtBase, Format fmt,
+			boolean separate) {
+		return resolveTarget(relativeToBase(srcAbs), tgtBase, fmt, separate);
+	}
+
+	private void convert(FileCollection sources) throws IOException {
 		convert(sources, filter, outputDir, formats, separateDirs);
 	}
 
-	private void convert (FileCollection sources, PatternFilterable filter,
+	private void convert(FileCollection sources, PatternFilterable filter,
 			File outputDir, Set<Format> formats, boolean separate)
 			throws IOException {
 		PandocExec pandoc = new PandocExec(pandocPath);
 		Path tgtBase = outputDir.toPath();
-		// Consider each source element separately
-		for (File s : sources) {
-			// The source element is considered the base directory
-			Path srcBase = s.toPath();
-			logger.debug("Base directory: " + srcBase);
-			for (File f : getProject().fileTree(srcBase).matching(filter)) {
-				Path src = f.toPath();
-				pandoc.setSource(src);
-				src = srcBase.relativize(src);
-				for (Format fmt : formats) {
-					Path tgt;
-					if (separate) {
-						String dirName;
-						if (Objects.equals(fmt.format, fmt.extension))
-							dirName = fmt.format;
-						else
-							dirName = fmt.format + "-" + fmt.extension;
-						tgt = tgtBase.resolve(dirName).resolve(src);
-					} else {
-						tgt = tgtBase.resolve(src);
-					}
-					Path parent = tgt.getParent();
-					if (Files.notExists(parent)) {
-						logger.debug("Creating directory {}", parent);
-						Files.createDirectories(parent);
-					}
-					tgt = PathUtil.changeExtension(tgt, fmt.extension);
-					pandoc.setTarget(tgt);
-					pandoc.setFormat(fmt);
-					logger.debug("Creating {}", tgt);
-					getProject().exec(pandoc);
+		for (File f : sources.getAsFileTree().matching(filter)) {
+			Path src = f.toPath();
+			pandoc.setSource(src);
+			for (Format fmt : formats) {
+				Path tgt = resolveTargetForAbs(src, tgtBase, fmt, separate);
+				Path parent = tgt.getParent();
+				if (Files.notExists(parent)) {
+					logger.debug("Creating directory {}", parent);
+					Files.createDirectories(parent);
 				}
+				pandoc.setTarget(tgt);
+				pandoc.setFormat(fmt);
+				logger.debug("Creating {}", tgt);
+				getProject().exec(pandoc);
 			}
 		}
 	}
