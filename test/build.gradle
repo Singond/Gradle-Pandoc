@@ -12,7 +12,13 @@ buildscript {
 }
 
 task runTask(type: PandocTask) {
-	sources "docs", "docs2"
+	sources files("docs") {
+		exclude "test.md"
+	}
+//	def src = files("docs") {
+//		exclude("another.md")
+//	}
+//	sources src
 	outputDir "$buildDir/docs"
 //	separateOutput false
 	format "html", "html"

@@ -11,19 +11,27 @@ import java.util.Set;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.FileTree;
+import org.gradle.api.file.FileTreeElement;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.util.PatternFilterable;
+import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.process.ExecSpec;
 
-public class PandocTask extends DefaultTask {
+import groovy.lang.Closure;
+
+public class PandocTask extends DefaultTask implements PatternFilterable {
 
 	private static final Logger logger = Logging.getLogger("Pandoc");
 
 	private FileCollection sources;
+	private final PatternFilterable filter;
 	private File outputDir;
 	private final Set<Format> formats;
 	private boolean separateDirs = true;
@@ -31,12 +39,13 @@ public class PandocTask extends DefaultTask {
 
 	public PandocTask() {
 		formats = new LinkedHashSet<Format>();
+		filter = new PatternSet();
 	}
 
 	@InputFiles
 	@SkipWhenEmpty
-	public FileCollection getSources() {
-		return sources;
+	public FileTree getSources() {
+		return sources.getAsFileTree().matching(filter);
 	}
 
 	/**
@@ -46,6 +55,82 @@ public class PandocTask extends DefaultTask {
 	 */
 	public void sources(Object... sources) {
 		this.sources = getProject().files(sources);
+	}
+
+	public void sources(Object sources, Closure<?> config) {
+		this.sources = getProject().files(sources, config);
+	}
+
+	@Override
+	public PatternFilterable exclude
+			(@SuppressWarnings("rawtypes") Closure excludeSpec) {
+		filter.exclude(excludeSpec);
+		return this;
+	}
+
+	@Override
+	public PatternFilterable exclude(Iterable<String> excludes) {
+		filter.exclude(excludes);
+		return this;
+	}
+
+	@Override
+	public PatternFilterable exclude(Spec<FileTreeElement> excludeSpec) {
+		filter.exclude(excludeSpec);
+		return this;
+	}
+
+	@Override
+	public PatternFilterable exclude(String... excludes) {
+		filter.exclude(excludes);
+		return this;
+	}
+
+	@Override
+	public Set<String> getExcludes() {
+		return filter.getExcludes();
+	}
+
+	@Override
+	public Set<String> getIncludes() {
+		return filter.getExcludes();
+	}
+
+	@Override
+	public PatternFilterable include
+			(@SuppressWarnings("rawtypes") Closure includeSpec) {
+		filter.include(includeSpec);
+		return this;
+	}
+
+	@Override
+	public PatternFilterable include(Iterable<String> includes) {
+		filter.include(includes);
+		return this;
+	}
+
+	@Override
+	public PatternFilterable include(Spec<FileTreeElement> includeSpec) {
+		filter.include(includeSpec);
+		return this;
+	}
+
+	@Override
+	public PatternFilterable include(String... includes) {
+		filter.include(includes);
+		return this;
+	}
+
+	@Override
+	public PatternFilterable setExcludes(Iterable<String> excludes) {
+		filter.setExcludes(excludes);
+		return this;
+	}
+
+	@Override
+	public PatternFilterable setIncludes(Iterable<String> includes) {
+		filter.setIncludes(includes);
+		return this;
 	}
 
 	@OutputDirectory
@@ -129,10 +214,10 @@ public class PandocTask extends DefaultTask {
 		for (File s : sources.getAsFileTree()) {
 			logger.quiet("- Contains: " + s);
 		}
-		logger.quiet("Individual sources as trees");
+		logger.quiet("Individual sources as trees (filtered)");
 		for (File s : sources) {
 			logger.quiet("- Source: " + s);
-			for (File f : getProject().fileTree(s)) {
+			for (File f : getProject().fileTree(s).matching(filter)) {
 				logger.quiet("  - Contains: " + f);
 			}
 		}
@@ -158,14 +243,14 @@ public class PandocTask extends DefaultTask {
 			logger.error("No format specified for task '{}'", getName());
 		}
 		try {
-			convert(sources, outputDir, formats, separateDirs);
+			convert(sources, filter, outputDir, formats, separateDirs);
 		} catch (IOException e) {
 			logger.error("Input/output error", e);
 		}
 	}
 
-	private void convert (FileCollection sources, File outputDir,
-			Set<Format> formats, boolean separate)
+	private void convert (FileCollection sources, PatternFilterable filter,
+			File outputDir, Set<Format> formats, boolean separate)
 			throws IOException {
 		PandocExec pandoc = new PandocExec(pandocPath);
 		Path tgtBase = outputDir.toPath();
@@ -174,7 +259,7 @@ public class PandocTask extends DefaultTask {
 			// The source element is considered the base directory
 			Path srcBase = s.toPath();
 			logger.quiet("Base directory: " + srcBase);
-			for (File f : getProject().fileTree(srcBase)) {
+			for (File f : getProject().fileTree(srcBase).matching(filter)) {
 				Path src = f.toPath();
 				pandoc.setSource(src);
 				src = srcBase.relativize(src);
