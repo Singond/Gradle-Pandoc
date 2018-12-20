@@ -13,14 +13,10 @@ buildscript {
 
 apply plugin: 'com.github.singond.pandoc'
 
-task runTask(type: PandocTask) {
+pandoc {
 	sources files("docs") {
 		exclude "test.md"
 	}
-//	def src = files("docs") {
-//		exclude("another.md")
-//	}
-//	sources src
 	outputDir "$buildDir/docs"
 //	separateOutput false
 	format "html", "html"
