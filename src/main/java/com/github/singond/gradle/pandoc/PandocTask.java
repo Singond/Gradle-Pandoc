@@ -57,10 +57,6 @@ public class PandocTask extends DefaultTask implements PatternFilterable {
 		this.sources = getProject().files(sources);
 	}
 
-	public void sources(Object sources, Closure<?> config) {
-		this.sources = getProject().files(sources, config);
-	}
-
 	@Override
 	public PatternFilterable exclude
 			(@SuppressWarnings("rawtypes") Closure excludeSpec) {
