@@ -301,11 +301,55 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 				Path src = input.getFile().toPath();
 				Path tgtBase = outputDir.toPath();
 				for (Format f : formats) {
-					Path target = resolveTarget(src, tgtBase, f, separateDirs);
+					Path target = resolveTargetForAbs(src, tgtBase, f, separateDirs);
 					getProject().delete(target);
 				}
 			}
 		});
+	}
+
+	private Path relativeToBase(Path srcFile) {
+		Path base = null;
+		for (File f : sources) {
+			Path p = f.toPath();
+			if (srcFile.startsWith(p)) {
+				base = p;
+			}
+		}
+		if (base == null) {
+			// The file does not appear in the sources, what to do?
+			// Will not happen, hopefully
+			base = srcFile.getParent();
+		}
+		return base.relativize(srcFile);
+	}
+
+	private Path resolveTarget(Path srcRel, Path tgtBase, Format fmt,
+			boolean separate) {
+		if (separate) {
+			String dirName;
+			if (Objects.equals(fmt.format, fmt.extension))
+				dirName = fmt.format;
+			else
+				dirName = fmt.format + "-" + fmt.extension;
+			return tgtBase.resolve(dirName).resolve(srcRel);
+		} else {
+			return tgtBase.resolve(srcRel);
+		}
+	}
+
+	/**
+	 * Resolves target for a source file given as absolute path.
+	 *
+	 * @param srcAbs absolute path to source file
+	 * @param tgtBase target directory
+	 * @param fmt conversion format
+	 * @param separate {@code true} if output should be separated per format
+	 * @return target name for {@code srcAbs}
+	 */
+	private Path resolveTargetForAbs(Path srcAbs, Path tgtBase, Format fmt,
+			boolean separate) {
+		return resolveTarget(relativeToBase(srcAbs), tgtBase, fmt, separate);
 	}
 
 	private void convert(FileCollection sources) throws IOException {
@@ -325,9 +369,9 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 			for (File f : getProject().fileTree(srcBase).matching(filter)) {
 				Path src = f.toPath();
 				pandoc.setSource(src);
-				src = srcBase.relativize(src);
+//				src = srcBase.relativize(src);
 				for (Format fmt : formats) {
-					Path tgt = resolveTarget(src, tgtBase, fmt, separate);
+					Path tgt = resolveTargetForAbs(src, tgtBase, fmt, separate);
 					Path parent = tgt.getParent();
 					if (Files.notExists(parent)) {
 						logger.debug("Creating directory {}", parent);
@@ -340,20 +384,6 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 					getProject().exec(pandoc);
 				}
 			}
-		}
-	}
-
-	private Path resolveTarget(Path srcRel, Path tgtBase, Format fmt,
-			boolean separate) {
-		if (separate) {
-			String dirName;
-			if (Objects.equals(fmt.format, fmt.extension))
-				dirName = fmt.format;
-			else
-				dirName = fmt.format + "-" + fmt.extension;
-			return tgtBase.resolve(dirName).resolve(srcRel);
-		} else {
-			return tgtBase.resolve(srcRel);
 		}
 	}
 
