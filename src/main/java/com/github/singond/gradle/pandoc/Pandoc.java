@@ -302,6 +302,7 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 				Path tgtBase = outputDir.toPath();
 				for (Format f : formats) {
 					Path target = resolveTargetForAbs(src, tgtBase, f, separateDirs);
+					logger.debug("Deleting {}", target);
 					getProject().delete(target);
 				}
 			}
@@ -326,16 +327,19 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 
 	private Path resolveTarget(Path srcRel, Path tgtBase, Format fmt,
 			boolean separate) {
+		Path target;
 		if (separate) {
 			String dirName;
 			if (Objects.equals(fmt.format, fmt.extension))
 				dirName = fmt.format;
 			else
 				dirName = fmt.format + "-" + fmt.extension;
-			return tgtBase.resolve(dirName).resolve(srcRel);
+			target = tgtBase.resolve(dirName).resolve(srcRel);
 		} else {
-			return tgtBase.resolve(srcRel);
+			target = tgtBase.resolve(srcRel);
 		}
+		target = PathUtil.changeExtension(target, fmt.extension);
+		return target;
 	}
 
 	/**
@@ -377,7 +381,6 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 						logger.debug("Creating directory {}", parent);
 						Files.createDirectories(parent);
 					}
-					tgt = PathUtil.changeExtension(tgt, fmt.extension);
 					pandoc.setTarget(tgt);
 					pandoc.setFormat(fmt);
 					logger.debug("Creating {}", tgt);
