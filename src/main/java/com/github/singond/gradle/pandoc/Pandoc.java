@@ -263,8 +263,8 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 	@TaskAction
 	public void run(IncrementalTaskInputs inputs) {
 		if (formats.isEmpty()) {
-			logger.error("No format specified for task '{}', no output produced",
-			             getName());
+			logger.error("No format specified for task '{}', "
+			             + "no output produced", getName());
 			return;
 		} else if (!inputs.isIncremental()) {
 			logger.info("Converting all documents with Pandoc...");
@@ -275,10 +275,12 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 			}
 			return;
 		}
+		// Action to take for new or out-of-date source files
 		inputs.outOfDate(new Action<InputFileDetails>() {
 			@Override
 			public void execute(InputFileDetails input) {
-				logger.info("Converting out-of-date documents with Pandoc...");
+				logger.info(
+						"Converting new or out-of-date files with Pandoc...");
 				FileCollection file = getProject().files(input.getFile());
 				logger.debug("Changed file: {}", file.getSingleFile());
 				try {
@@ -289,6 +291,7 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 				}
 			}
 		});
+		// Action to take for removed source files
 		inputs.removed(new Action<InputFileDetails>() {
 			@Override
 			public void execute(InputFileDetails input) {
@@ -296,7 +299,8 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 				Path src = input.getFile().toPath();
 				Path tgtBase = outputDir.toPath();
 				for (Format f : formats) {
-					Path target = resolveTargetForAbs(src, tgtBase, f, separateDirs);
+					Path target = resolveTargetForAbs
+							(src, tgtBase, f, separateDirs);
 					logger.debug("Deleting {}", target);
 					getProject().delete(target);
 				}
