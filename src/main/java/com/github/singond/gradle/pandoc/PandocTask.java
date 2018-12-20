@@ -238,6 +238,7 @@ public class PandocTask extends DefaultTask implements PatternFilterable {
 		if (formats.isEmpty()) {
 			logger.error("No format specified for task '{}'", getName());
 		}
+		logger.info("Converting documents with Pandoc...");
 		convert(sources, filter, outputDir, formats, separateDirs);
 	}
 
@@ -250,7 +251,7 @@ public class PandocTask extends DefaultTask implements PatternFilterable {
 		for (File s : sources) {
 			// The source element is considered the base directory
 			Path srcBase = s.toPath();
-			logger.quiet("Base directory: " + srcBase);
+			logger.debug("Base directory: " + srcBase);
 			for (File f : getProject().fileTree(srcBase).matching(filter)) {
 				Path src = f.toPath();
 				pandoc.setSource(src);
@@ -275,7 +276,7 @@ public class PandocTask extends DefaultTask implements PatternFilterable {
 					tgt = PathUtil.changeExtension(tgt, fmt.extension);
 					pandoc.setTarget(tgt);
 					pandoc.setFormat(fmt);
-					logger.quiet("Creating {}", tgt);
+					logger.debug("Creating {}", tgt);
 					getProject().exec(pandoc);
 				}
 			}
