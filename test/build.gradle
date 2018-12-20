@@ -1,4 +1,4 @@
-import com.github.singond.gradle.pandoc.PandocTask
+import com.github.singond.gradle.pandoc.Pandoc
 
 buildscript {
 	repositories {
@@ -38,6 +38,12 @@ pandoc {
 		fileTraversalDemo()
 		logger.quiet("")
 	}
+}
+
+task pandoc2(type: Pandoc) {
+	sources "docs"
+	outputDir "$buildDir/docs-task2"
+	format "html"
 }
 
 /*

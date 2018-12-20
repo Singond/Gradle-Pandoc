@@ -7,7 +7,7 @@ public class PandocPlugin implements Plugin<Project> {
 
 	@Override
 	public void apply(Project project) {
-		project.getTasks().create("pandoc", PandocTask.class);
+		project.getTasks().create("pandoc", Pandoc.class);
 	}
 
 }

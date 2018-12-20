@@ -26,7 +26,7 @@ import org.gradle.process.ExecSpec;
 
 import groovy.lang.Closure;
 
-public class PandocTask extends DefaultTask implements PatternFilterable {
+public class Pandoc extends DefaultTask implements PatternFilterable {
 
 	private static final Logger logger = Logging.getLogger("Pandoc");
 
@@ -37,7 +37,7 @@ public class PandocTask extends DefaultTask implements PatternFilterable {
 	private boolean separateDirs = true;
 	private String pandocPath = null;
 
-	public PandocTask() {
+	public Pandoc() {
 		formats = new LinkedHashSet<Format>();
 		filter = new PatternSet();
 	}
