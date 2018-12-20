@@ -3,6 +3,7 @@ package com.github.singond.gradle.pandoc;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -24,6 +25,8 @@ import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.incremental.IncrementalTaskInputs;
+import org.gradle.api.tasks.incremental.InputFileDetails;
 import org.gradle.api.tasks.util.PatternFilterable;
 import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.process.ExecSpec;
@@ -258,18 +261,58 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 	}
 
 	@TaskAction
-	public void run() throws IOException {
+	public void run(IncrementalTaskInputs inputs) {
 		if (formats.isEmpty()) {
-			logger.error(
-					"No format specified for task '{}', no output produced",
-					getName());
+			logger.error("No format specified for task '{}', no output produced",
+			             getName());
+			return;
+		} else if (!inputs.isIncremental()) {
+			logger.info("Converting all documents with Pandoc...");
+			try {
+				convert(sources);
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
 			return;
 		}
-		logger.info("Converting documents with Pandoc...");
+		inputs.outOfDate(new Action<InputFileDetails>() {
+			@Override
+			public void execute(InputFileDetails input) {
+				logger.info("Converting out-of-date documents with Pandoc...");
+//				Path src = input.getFile().toPath();
+//				Path tgtBase = outputDir.toPath();
+//				for (Format f : formats) {
+//					Path target = resolveTarget(src, tgtBase, f, separateDirs);
+//				}
+
+				FileCollection file = getProject().files(input.getFile());
+				logger.debug("Changed file: {}", file.getSingleFile());
+				try {
+					Pandoc.this.convert(file);
+				} catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
+			}
+		});
+		inputs.removed(new Action<InputFileDetails>() {
+			@Override
+			public void execute(InputFileDetails input) {
+				logger.info("Removing targets of removed sources...");
+				Path src = input.getFile().toPath();
+				Path tgtBase = outputDir.toPath();
+				for (Format f : formats) {
+					Path target = resolveTarget(src, tgtBase, f, separateDirs);
+					getProject().delete(target);
+				}
+			}
+		});
+	}
+
+	private void convert(FileCollection sources) throws IOException {
 		convert(sources, filter, outputDir, formats, separateDirs);
 	}
 
-	private void convert (FileCollection sources, PatternFilterable filter,
+	private void convert(FileCollection sources, PatternFilterable filter,
 			File outputDir, Set<Format> formats, boolean separate)
 			throws IOException {
 		PandocExec pandoc = new PandocExec(pandocPath);
@@ -284,17 +327,7 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 				pandoc.setSource(src);
 				src = srcBase.relativize(src);
 				for (Format fmt : formats) {
-					Path tgt;
-					if (separate) {
-						String dirName;
-						if (Objects.equals(fmt.format, fmt.extension))
-							dirName = fmt.format;
-						else
-							dirName = fmt.format + "-" + fmt.extension;
-						tgt = tgtBase.resolve(dirName).resolve(src);
-					} else {
-						tgt = tgtBase.resolve(src);
-					}
+					Path tgt = resolveTarget(src, tgtBase, fmt, separate);
 					Path parent = tgt.getParent();
 					if (Files.notExists(parent)) {
 						logger.debug("Creating directory {}", parent);
@@ -307,6 +340,20 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 					getProject().exec(pandoc);
 				}
 			}
+		}
+	}
+
+	private Path resolveTarget(Path srcRel, Path tgtBase, Format fmt,
+			boolean separate) {
+		if (separate) {
+			String dirName;
+			if (Objects.equals(fmt.format, fmt.extension))
+				dirName = fmt.format;
+			else
+				dirName = fmt.format + "-" + fmt.extension;
+			return tgtBase.resolve(dirName).resolve(srcRel);
+		} else {
+			return tgtBase.resolve(srcRel);
 		}
 	}
 
