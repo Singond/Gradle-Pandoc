@@ -238,15 +238,11 @@ public class PandocTask extends DefaultTask implements PatternFilterable {
 	}
 
 	@TaskAction
-	public void run() {
+	public void run() throws IOException {
 		if (formats.isEmpty()) {
 			logger.error("No format specified for task '{}'", getName());
 		}
-		try {
-			convert(sources, filter, outputDir, formats, separateDirs);
-		} catch (IOException e) {
-			logger.error("Input/output error", e);
-		}
+		convert(sources, filter, outputDir, formats, separateDirs);
 	}
 
 	private void convert (FileCollection sources, PatternFilterable filter,
