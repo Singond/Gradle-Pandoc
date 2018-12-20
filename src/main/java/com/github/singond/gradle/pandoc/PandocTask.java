@@ -274,7 +274,7 @@ public class PandocTask extends DefaultTask implements PatternFilterable {
 					Path parent = tgt.getParent();
 					if (Files.notExists(parent)) {
 						logger.debug("Creating directory {}", parent);
-						Files.createDirectory(parent);
+						Files.createDirectories(parent);
 					}
 					tgt = PathUtil.changeExtension(tgt, fmt.extension);
 					pandoc.setTarget(tgt);
