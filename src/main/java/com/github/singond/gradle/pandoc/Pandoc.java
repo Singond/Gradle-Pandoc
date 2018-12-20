@@ -269,7 +269,7 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 		} else if (!inputs.isIncremental()) {
 			logger.info("Converting all documents with Pandoc...");
 			try {
-				convert(sources);
+				convert(getSources());
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			}
@@ -279,15 +279,10 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 			@Override
 			public void execute(InputFileDetails input) {
 				logger.info("Converting out-of-date documents with Pandoc...");
-//				Path src = input.getFile().toPath();
-//				Path tgtBase = outputDir.toPath();
-//				for (Format f : formats) {
-//					Path target = resolveTarget(src, tgtBase, f, separateDirs);
-//				}
-
 				FileCollection file = getProject().files(input.getFile());
 				logger.debug("Changed file: {}", file.getSingleFile());
 				try {
+					// NOTE: We assume the file is not filtered out
 					Pandoc.this.convert(file);
 				} catch (IOException e) {
 					throw new UncheckedIOException(e);
@@ -325,6 +320,15 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 		return base.relativize(srcFile);
 	}
 
+	/**
+	 * Resolves the target path for a source file given by a relative path.
+	 *
+	 * @param srcRel relative path to source file
+	 * @param tgtBase target directory
+	 * @param fmt conversion format
+	 * @param separate {@code true} if output should be separated per format
+	 * @return target name for {@code srcRel}
+	 */
 	private Path resolveTarget(Path srcRel, Path tgtBase, Format fmt,
 			boolean separate) {
 		Path target;
@@ -343,7 +347,7 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 	}
 
 	/**
-	 * Resolves target for a source file given as absolute path.
+	 * Resolves the target path for a source file given by an absolute path.
 	 *
 	 * @param srcAbs absolute path to source file
 	 * @param tgtBase target directory
@@ -365,27 +369,20 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 			throws IOException {
 		PandocExec pandoc = new PandocExec(pandocPath);
 		Path tgtBase = outputDir.toPath();
-		// Consider each source element separately
-		for (File s : sources) {
-			// The source element is considered the base directory
-			Path srcBase = s.toPath();
-			logger.debug("Base directory: " + srcBase);
-			for (File f : getProject().fileTree(srcBase).matching(filter)) {
-				Path src = f.toPath();
-				pandoc.setSource(src);
-//				src = srcBase.relativize(src);
-				for (Format fmt : formats) {
-					Path tgt = resolveTargetForAbs(src, tgtBase, fmt, separate);
-					Path parent = tgt.getParent();
-					if (Files.notExists(parent)) {
-						logger.debug("Creating directory {}", parent);
-						Files.createDirectories(parent);
-					}
-					pandoc.setTarget(tgt);
-					pandoc.setFormat(fmt);
-					logger.debug("Creating {}", tgt);
-					getProject().exec(pandoc);
+		for (File f : sources.getAsFileTree().matching(filter)) {
+			Path src = f.toPath();
+			pandoc.setSource(src);
+			for (Format fmt : formats) {
+				Path tgt = resolveTargetForAbs(src, tgtBase, fmt, separate);
+				Path parent = tgt.getParent();
+				if (Files.notExists(parent)) {
+					logger.debug("Creating directory {}", parent);
+					Files.createDirectories(parent);
 				}
+				pandoc.setTarget(tgt);
+				pandoc.setFormat(fmt);
+				logger.debug("Creating {}", tgt);
+				getProject().exec(pandoc);
 			}
 		}
 	}
