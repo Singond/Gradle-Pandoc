@@ -2,8 +2,10 @@ package com.github.singond.gradle.pandoc;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -16,7 +18,9 @@ import org.gradle.api.file.FileTreeElement;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.specs.Spec;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
@@ -45,7 +49,10 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 	@InputFiles
 	@SkipWhenEmpty
 	public FileTree getSources() {
-		return sources.getAsFileTree().matching(filter);
+		if (sources == null)
+			return null;
+		else
+			return sources.getAsFileTree().matching(filter);
 	}
 
 	/**
@@ -130,6 +137,7 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 	}
 
 	@OutputDirectory
+	@SkipWhenEmpty
 	public File getOutputDir() {
 		return outputDir;
 	}
@@ -141,6 +149,11 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 	 */
 	public void outputDir(Object outputDir) {
 		this.outputDir = getProject().file(outputDir);
+	}
+
+	@Input
+	public Set<Format> getFormats() {
+		return Collections.unmodifiableSet(formats);
 	}
 
 	/**
@@ -189,8 +202,19 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 		formats.add(new Format(format, format));
 	}
 
+	@Input
+	public boolean getSeparateOutput() {
+		return separateDirs;
+	}
+
 	public void separateOutput(boolean separate) {
 		separateDirs = separate;
+	}
+
+	@Input
+	@Optional
+	public String getPandocPath() {
+		return pandocPath;
 	}
 
 	public void pandocPath(String path) {
@@ -236,7 +260,10 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 	@TaskAction
 	public void run() throws IOException {
 		if (formats.isEmpty()) {
-			logger.error("No format specified for task '{}'", getName());
+			logger.error(
+					"No format specified for task '{}', no output produced",
+					getName());
+			return;
 		}
 		logger.info("Converting documents with Pandoc...");
 		convert(sources, filter, outputDir, formats, separateDirs);
@@ -286,7 +313,8 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 	/**
 	 * A format of an output file, along with filename extension.
 	 */
-	private static class Format {
+	private static class Format implements Serializable {
+		private static final long serialVersionUID = 1L;
 		final String format;
 		final String extension;
 
