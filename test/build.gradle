@@ -15,7 +15,7 @@ apply plugin: 'com.github.singond.pandoc'
 
 pandoc {
 	sources files("docs") {
-		exclude "test.md"
+		exclude "another.md"
 	}
 	// TODO Fix circular dependency error (where?):
 //	sources files("docs", "docs2") {
@@ -26,7 +26,7 @@ pandoc {
 	format "html", "html"
 	format "latex", "pdf"
 //	pandocPath "/usr/bin/pandoc"
-	outputs.upToDateWhen{false}         // Run this every time
+//	outputs.upToDateWhen{false}         // Run this every time
 	doFirst {
 		fileTraversalDemo()
 		logger.quiet("")
