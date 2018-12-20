@@ -17,6 +17,10 @@ pandoc {
 	sources files("docs") {
 		exclude "test.md"
 	}
+	// TODO Fix circular dependency error (where?):
+//	sources files("docs", "docs2") {
+//		exclude "test.md"
+//	}
 	outputDir "$buildDir/docs"
 //	separateOutput false
 	format "html", "html"
