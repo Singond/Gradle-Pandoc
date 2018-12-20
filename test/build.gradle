@@ -14,12 +14,20 @@ buildscript {
 apply plugin: 'com.github.singond.pandoc'
 
 pandoc {
+	/*
+	 * NOTE: For some reason, the following causes a circular dependency:
+	 *
+	 *     sources files("docs", "docs2") {
+	 *         exclude "another.md"
+	 *     }
+	 *
+	 * Omitting either 'docs', 'docs2' or the exclude line fixes it.
+	 * This issue is not addressed in any way in this plugin.
+	 * Also note that the Copy task (and maybe other core tasks) suffers
+	 * the very same issue.
+	 */
 	sources "docs", "docs2"
 	exclude "another.md"
-	// TODO Fix circular dependency error (where?):
-//	sources files("docs", "docs2") {
-//		exclude "another.md"
-//	}
 	outputDir "$buildDir/docs"
 //	separateOutput false
 	format "html", "html"
@@ -37,7 +45,9 @@ pandoc {
  * for a file in a file collection.
  */
 task examineCopy(type: Copy) {
-	from "docs/nested1", "docs2"
+	from files("docs", "docs2") {
+		exclude "another.md"
+	}
 	into "$buildDir/copied"
 }
 
