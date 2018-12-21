@@ -7,7 +7,9 @@ public class PandocPlugin implements Plugin<Project> {
 
 	@Override
 	public void apply(Project project) {
-		project.getTasks().create("pandoc", Pandoc.class);
+		Pandoc task = project.getTasks().create("pandoc", Pandoc.class);
+		task.setGroup("Build");
+		task.setDescription("Assembles textual documents.");
 	}
 
 }
