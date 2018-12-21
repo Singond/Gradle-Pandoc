@@ -16,12 +16,28 @@ Requirements
 
 Usage
 =====
-To simplest way to use this plugin is to add the following code to your
-`build.gradle`:
+To enable the plugin, add the following to the top of your `build.gradle`:
 
 ```groovy
+buildscript {
+	repositories {
+		maven {
+			url 'https://dl.bintray.com/singon/maven'
+		}
+	}
+	dependencies {
+		classpath 'com.github.singond:gradle-pandoc:0.1.0-alpha'
+	}
+}
 apply plugin: 'com.github.singond.pandoc'
+```
 
+A new task type `Pandoc` is now available; its fully-qualified name is
+`com.github.singond.gradle.pandoc.Pandoc`.
+Also, a single instance of this task called `pandoc` has been added to your
+project. You need to configure it first, for example:
+
+```groovy
 pandoc {
 	sources "docs"
 	outputDir "$buildDir/docs"
@@ -34,8 +50,12 @@ This will convert every file in the `docs` directory into a corresponding
 `html` and `pdf` file in the `${buildDir}/docs` directory, assuming thah
 `pandoc` is installed on your system and available in `PATH`.
 
-In case the `pandoc` tool is not in your `PATH`, you may specify another
-location by adding:
+
+Locating Pandoc Installation
+--------------
+If the `pandoc` tool is not in your `PATH`, the build will not be able to
+complete successfully. In order to correct this, specify another location by
+adding:
 
 ```groovy
 pandoc {
