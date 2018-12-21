@@ -62,14 +62,22 @@ bintray {
 	pkg {
 		repo = 'maven'
 		name = project.name
+		desc = project.description
 		licenses = ['Apache-2.0']
 		vcsUrl = 'https://github.com/Singond/Gradle-Pandoc.git'
+		issueTrackerUrl = 'https://github.com/Singond/Gradle-Pandoc/issues'
+		labels = ['gradle-plugin', 'pandoc']
+		githubRepo = 'Singond/Gradle-Pandoc'
+//		githubReadme = 'README.md'  // Not supported
+//		githubReleaseNotesFile = ''
 		version {
 			name = project.version
-			desc = project.description
+			desc = "Version ${project.version}"
 			released = new Date()   // today
-//			vcsTag
+			vcsTag = "v${project.version}"
 		}
 	}
 	publications = ['pluginPublication']
+//	publish = true                  // Publish automatically upon upload
+	override = true                 // Remove in production?
 }
