@@ -78,6 +78,5 @@ bintray {
 		}
 	}
 	publications = ['pluginPublication']
-//	publish = true                  // Publish automatically upon upload
-	override = true                 // Remove in production?
+	publish = true                  // Publish automatically upon upload
 }
