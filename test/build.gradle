@@ -35,8 +35,11 @@ pandoc {
 //	pandocPath "/usr/bin/pandoc"
 //	outputs.upToDateWhen{false}         // Run this every time
 	doFirst {
-		fileTraversalDemo()
-		logger.quiet("")
+		logger.quiet "Source files:"
+		sources.each {
+			logger.quiet "$it"
+		}
+		logger.quiet ""
 	}
 }
 

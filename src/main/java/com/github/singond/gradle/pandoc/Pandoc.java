@@ -224,42 +224,6 @@ public class Pandoc extends DefaultTask implements PatternFilterable {
 		pandocPath = path;
 	}
 
-	public void fileTraversalDemo() {
-		logger.quiet("Sources");
-		for (File s : sources) {
-			logger.quiet("- Contains: " + s);
-		}
-		logger.quiet("Sources as files");
-		for (File s : sources.getFiles()) {
-			logger.quiet("- Contains: " + s);
-		}
-		logger.quiet("Sources as tree");
-		for (File s : sources.getAsFileTree()) {
-			logger.quiet("- Contains: " + s);
-		}
-		logger.quiet("Individual sources as trees (filtered)");
-		for (File s : sources) {
-			logger.quiet("- Source: " + s);
-			for (File f : getProject().fileTree(s).matching(filter)) {
-				logger.quiet("  - Contains: " + f);
-			}
-		}
-	}
-
-	/**
-	 * Example of a system call.
-	 */
-	public void systemCallDemo() {
-		logger.quiet("Creating newfile.txt");
-		getProject().exec(new Action<ExecSpec>() {
-			@Override
-			public void execute(ExecSpec e) {
-				e.executable("touch");
-				e.args("newfile.txt");
-			}
-		});
-	}
-
 	@TaskAction
 	public void run(IncrementalTaskInputs inputs) {
 		if (formats.isEmpty()) {
