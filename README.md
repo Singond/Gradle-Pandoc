@@ -26,7 +26,8 @@ buildscript {
 		}
 	}
 	dependencies {
-		classpath 'com.github.singond:gradle-pandoc:0.1.0-alpha'
+		// Prefer a fixed version instead of '0.+'
+		classpath 'com.github.singond:gradle-pandoc:0.+'
 	}
 }
 apply plugin: 'com.github.singond.pandoc'
