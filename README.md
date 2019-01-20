@@ -35,8 +35,8 @@ apply plugin: 'com.github.singond.pandoc'
 
 A new task type `Pandoc` is now available; its fully-qualified name is
 `com.github.singond.gradle.pandoc.Pandoc`.
-Also, a single instance of this task called `pandoc` has been added to your
-project. You need to configure it first, for example:
+Also, a single instance of this task has been added to your project under
+the name `pandoc`. You need to configure it first, for example:
 
 ```groovy
 pandoc {
@@ -54,14 +54,14 @@ This will convert every file in the `docs` directory into a corresponding
 
 Locating Pandoc Installation
 --------------
-If the `pandoc` tool is not in your `PATH`, the build will not be able to
-complete successfully. In order to correct this, specify another location by
-adding:
+If the `pandoc` tool is not in your `PATH`, the above build will fail.
+In order to correct this, specify the full path to your installation
+of `pandoc` by adding:
 
 ```groovy
 pandoc {
 	...
-	pandocPath "/path/to/pandoc"
+	pandocPath "/full/path/to/pandoc"
 }
 ```
 
@@ -136,7 +136,7 @@ pandoc {
 ```
 
 Running `gradle pandoc` will result in the following files being created
-(assuming that your build directory is set to `build` (the default):
+(assuming your build directory is set to `build`, ie. the default):
 
 ```
 build/
