@@ -21,9 +21,7 @@ To enable the plugin, add the following to the top of your `build.gradle`:
 ```groovy
 buildscript {
 	repositories {
-		maven {
-			url 'https://dl.bintray.com/singon/maven'
-		}
+		jcenter()
 	}
 	dependencies {
 		// Prefer a fixed version instead of '0.+'
