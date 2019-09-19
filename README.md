@@ -31,8 +31,8 @@ buildscript {
 apply plugin: 'com.github.singond.pandoc'
 ```
 
-A new task type `Pandoc` is now available; its fully-qualified name is
-`com.github.singond.gradle.pandoc.Pandoc`.
+A new task type `Pandoc` is now available
+(the fully qualified name is `com.github.singond.gradle.pandoc.Pandoc`).
 Also, a single instance of this task has been added to your project under
 the name `pandoc`. You need to configure it first, for example:
 
@@ -71,7 +71,7 @@ If you don't specify any conversion format, this plugin will not do anything.
 To add a conversion format, specify its name, and (optionally) a corresponding
 file name extension in the `format` method.
 The format name (here, `latex`) must be a format name recognized by Pandoc.
-Please refere to the `pandoc` manual for the list of available formats.
+Please refer to the `pandoc` manual for the list of available formats.
 
 ```groovy
 pandoc {
